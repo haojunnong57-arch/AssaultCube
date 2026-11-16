@@ -1,0 +1,67 @@
+name: iOS Build
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+env:
+  IOS_MIN: "17.0"
+  GH_TOKEN: ${{ github.token }}
+
+jobs:
+  build:
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Init log
+        run: |
+          echo "=== run $GITHUB_RUN_ID $(date -u) ===" > build.log
+          bash ci-step.sh "Toolchain" bash -c 'xcodebuild -version; xcrun --sdk iphoneos --show-sdk-version'
+
+      - name: Restore deps cache
+        id: cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            prefix
+            gl4es
+          key: iosdeps-v5
+
+      - name: Build deps (idempotent, skips present libs)
+        run: bash ci-step.sh "Deps" bash ci-deps.sh
+
+      - name: Compile engine
+        run: bash ci-step.sh "Engine" bash ci-engine.sh
+
+      - name: Package IPA
+        run: bash ci-step.sh "Package" bash ci-package.sh
+
+      - name: Publish release asset
+        if: always() && hashFiles('AssaultCube-iOS.ipa') != ''
+        run: |
+          gh release delete build --yes 2>/dev/null || true
+          gh release create build AssaultCube-iOS.ipa --title "AssaultCube iOS" --notes "Auto build run $GITHUB_RUN_ID ($(date -u))"
+          echo "RELEASE_URL=https://github.com/$GITHUB_REPOSITORY/releases/download/build/AssaultCube-iOS.ipa" | tee -a build.log
+
+      - name: Upload log to build-logs branch
+        if: always()
+        run: |
+          git config user.name ci-bot
+          git config user.email ci-bot@users.noreply.github.com
+          git fetch origin build-logs || true
+          if git rev-parse --verify origin/build-logs >/dev/null 2>&1; then
+            git checkout build-logs
+            git reset --hard origin/build-logs
+          else
+            git checkout --orphan build-logs
+          fi
+          git rm -r -f --ignore-unmatch . 2>/dev/null || true
+          cp build.log run.log
+          git add -f run.log
+          git commit -m "run $GITHUB_RUN_NUMBER" --allow-empty
+          git push origin build-logs --force
