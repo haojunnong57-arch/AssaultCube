@@ -734,7 +734,8 @@ static NSString *ACKeyNameForSDLKey(int sym)
     if (@available(iOS 16.0, *)) {
         if ([vc.sheetPresentationController isKindOfClass:UISheetPresentationController.class]) {
             UISheetPresentationController *sheet = (UISheetPresentationController *)vc.sheetPresentationController;
-            sheet.detents = @[[UISheetDetent mediumDetent], [UISheetDetent largeDetent]];
+            sheet.detents = @[[UISheetPresentationControllerDetent mediumDetent],
+                              [UISheetPresentationControllerDetent largeDetent]];
             sheet.prefersGrabberVisible = YES;
             sheet.preferredCornerRadius = 28;
         }
@@ -871,6 +872,7 @@ static int ACKeyEventWatch(void *userdata, SDL_Event *event)
 @property (nonatomic, strong) UIScrollView *scroll;
 @property (nonatomic, strong) UIStackView *stack;
 @property (nonatomic, strong) UILabel *captureLabel;
+@property (nonatomic, strong) CAGradientLayer *ambient;
 @end
 
 @implementation ACSettingsViewController
@@ -894,7 +896,7 @@ static int ACKeyEventWatch(void *userdata, SDL_Event *event)
                        (__bridge id)[UIColor colorWithRed:0.16 green:0.10 blue:0.22 alpha:1].CGColor,
                        (__bridge id)[UIColor colorWithRed:0.06 green:0.08 blue:0.12 alpha:1].CGColor];
     ambient.locations = @[@0.0, @0.5, @1.0];
-    ambient.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
+    self.ambient = ambient;
     [self.view.layer addSublayer:ambient];
 
     _scroll = [[UIScrollView alloc] initWithFrame:CGRectZero];
@@ -939,6 +941,7 @@ static int ACKeyEventWatch(void *userdata, SDL_Event *event)
 - (void)viewDidLayoutSubviews
 {
     [super viewDidLayoutSubviews];
+    self.ambient.frame = self.view.bounds;
     self.scroll.contentInset = UIEdgeInsetsMake(0, 0, 24, 0);
 }
 
