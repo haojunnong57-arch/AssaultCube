@@ -6,4 +6,4 @@ shift
 "$@" >> build.log 2>&1
 rc=$?
 echo "EXIT_CODE=$rc" >> build.log
-exit 0
+exit $rc

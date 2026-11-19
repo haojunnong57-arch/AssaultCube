@@ -5,7 +5,11 @@ IOS_MIN=${IOS_MIN:-17.0}
 AC=upstream
 
 if [ ! -d "$AC" ]; then
-  git clone --depth 1 -b acompmobile https://github.com/assaultcube/AC.git "$AC"
+  # Pin the acmobile commit the iOS patch is written against.
+  git init "$AC"
+  git -C "$AC" remote add origin https://github.com/assaultcube/AC.git
+  git -C "$AC" fetch --depth 1 origin a2fa75e0297d449a45ea0ed8eed7583512d25f43
+  git -C "$AC" checkout --detach FETCH_HEAD
 fi
 if [ ! -d gl4es ]; then
   git clone --depth 1 https://github.com/ptitSeb/gl4es.git gl4es
