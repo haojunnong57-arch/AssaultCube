@@ -54,6 +54,9 @@ static void ac_ios_setup(void)
 
     if (home) setenv("AC_HOME_DIR", [home UTF8String], 1);
 
+    /* The native UIKit control layer replaces the GL touch atlas icons. */
+    setenv("AC_IOS_NATIVE_TOUCH", "1", 1);
+
     /* No GL context exists yet, so skip gl4es hardware probing and use sane
        OpenGL ES 2.0 defaults (npot/fbo/etc) instead of a half-empty state. */
     setenv("LIBGL_NOTEST", "1", 1);
