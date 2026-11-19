@@ -11,6 +11,15 @@ if [ ! -d gl4es ]; then
   git clone --depth 1 https://github.com/ptitSeb/gl4es.git gl4es
 fi
 
+# Apply the iOS input patch (native touch layer hook + hardware keyboard/mouse
+# forwarding). Skipped when the upstream tree already carries it.
+if git -C "$AC" apply --check "$PWD/ios/ios-input.patch" 2>/dev/null; then
+  git -C "$AC" apply "$PWD/ios/ios-input.patch"
+  echo "[PATCH] ios-input.patch applied" >> build.log
+else
+  echo "[PATCH] ios-input.patch already applied (or does not match upstream)" >> build.log
+fi
+
 SDK=$(xcrun --sdk iphoneos --show-sdk-path)
 CC="xcrun --sdk iphoneos clang   -arch arm64 -isysroot $SDK -mios-version-min=$IOS_MIN"
 CXX="xcrun --sdk iphoneos clang++ -arch arm64 -isysroot $SDK -mios-version-min=$IOS_MIN"
@@ -58,6 +67,13 @@ done
 echo "[OBJCXX] ios/main.m" >> build.log
 $CXX -x objective-c++ -fobjc-arc -arch arm64 -isysroot $SDK -mios-version-min=$IOS_MIN \
   -Iprefix/include/SDL2 -Igl4es/include -c ios/main.m -o objs/ios_main.o >> build.log 2>&1 || exit 1
+
+echo "[OBJCXX] ios/MobileUI.mm" >> build.log
+$CXX -x objective-c++ -fobjc-arc -std=c++11 -arch arm64 -isysroot $SDK -mios-version-min=$IOS_MIN \
+  -Iprefix/include/SDL2 -Igl4es/include -c ios/MobileUI.mm -o objs/ios_mobileui.o >> build.log 2>&1 || exit 1
+
+echo "[CXX] ios/ac_bridge.cpp" >> build.log
+$CXX $CXXFLAGS -Iprefix/include/SDL2 -c ios/ac_bridge.cpp -o objs/ios_bridge.o >> build.log 2>&1 || exit 1
 
 echo "[LINK] AC" >> build.log
 $CXX objs/*.o -o AC \
