@@ -945,6 +945,28 @@ static int ACKeyEventWatch(void *userdata, SDL_Event *event)
     self.scroll.contentInset = UIEdgeInsetsMake(0, 0, 24, 0);
 }
 
+- (void)viewDidAppear:(BOOL)animated
+{
+    [super viewDidAppear:animated];
+    if (UIAccessibilityIsReduceMotionEnabled()) return;
+    NSTimeInterval delay = 0.0;
+    for (UIView *v in self.stack.arrangedSubviews) {
+        if (![v isKindOfClass:ACGlassView.class]) continue;
+        v.alpha = 0.0;
+        v.transform = CGAffineTransformMakeTranslation(0, 16);
+        [UIView animateWithDuration:0.55
+                              delay:delay
+             usingSpringWithDamping:0.82
+              initialSpringVelocity:0.4
+                            options:UIViewAnimationOptionAllowUserInteraction
+                         animations:^{
+            v.alpha = 1.0;
+            v.transform = CGAffineTransformIdentity;
+        } completion:nil];
+        delay += 0.06;
+    }
+}
+
 #pragma mark building blocks
 
 - (UILabel *)sectionTitle:(NSString *)text
@@ -954,6 +976,7 @@ static int ACKeyEventWatch(void *userdata, SDL_Event *event)
     l.textColor = ACWhite(0.62);
     l.font = [UIFont systemFontOfSize:13 weight:UIFontWeightSemibold];
     l.numberOfLines = 1;
+    l.translatesAutoresizingMaskIntoConstraints = NO;
     return l;
 }
 
@@ -1039,6 +1062,7 @@ static int ACKeyEventWatch(void *userdata, SDL_Event *event)
 - (void)buildHeader
 {
     UIView *header = [[UIView alloc] initWithFrame:CGRectZero];
+    header.translatesAutoresizingMaskIntoConstraints = NO;
     UILabel *title = [[UILabel alloc] initWithFrame:CGRectZero];
     title.text = @"设置";
     title.textColor = UIColor.whiteColor;
@@ -1160,6 +1184,7 @@ static int ACKeyEventWatch(void *userdata, SDL_Event *event)
     hint.textColor = ACWhite(0.55);
     hint.font = [UIFont systemFontOfSize:12 weight:UIFontWeightRegular];
     hint.numberOfLines = 0;
+    hint.translatesAutoresizingMaskIntoConstraints = NO;
     [self.stack addArrangedSubview:hint];
 
     ACGlassView *card = [self card];
@@ -1315,6 +1340,7 @@ static int ACKeyEventWatch(void *userdata, SDL_Event *event)
 - (void)buildResetSection
 {
     UIControl *reset = [[UIControl alloc] initWithFrame:CGRectZero];
+    reset.translatesAutoresizingMaskIntoConstraints = NO;
     reset.backgroundColor = [UIColor colorWithRed:0.58 green:0.10 blue:0.12 alpha:0.55];
     reset.layer.cornerRadius = 16;
     reset.layer.cornerCurve = kCACornerCurveContinuous;
